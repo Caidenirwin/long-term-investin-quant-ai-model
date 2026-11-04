@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Downloaded market data (re-downloaded automatically by the scripts)
+data/
+ai_investor/data/
+
+# Generated results (recreated by main.py, scan.py, optimize.py, ai_investor.train / advisor)
+outputs/
+ai_investor/reports/
+
+# Your forward-test / live accounts and logs (personal, change daily)
+live/
+my_swing_positions.csv
+
+# Local tool settings and temp files
+.claude/
+*.tmp

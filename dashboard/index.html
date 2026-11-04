@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f7f6f3;
+  --card: #ffffff;
+  --ink: #1d1c1a;
+  --ink-2: #5f5d58;
+  --muted: #8a8780;
+  --hair: rgba(29, 28, 26, 0.09);
+  --grid: #ebe9e3;
+  --chip: #efede8;
+  --chip-active: #1d1c1a;
+  --chip-active-ink: #ffffff;
+  --good: #006300;
+  --good-bg: rgba(12, 163, 12, 0.10);
+  --bad: #c23434;
+  --bad-bg: rgba(208, 59, 59, 0.09);
+  --warn-bg: rgba(250, 178, 25, 0.18);
+  --warn-ink: #7a5200;
+  --line: #1d1c1a;
+  --bench: #9a978f;
+  --bar: #2a78d6;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --hair: rgba(255, 255, 255, 0.10); --grid: #2c2c2a; --chip: #262624;
+    --chip-active: #f0efec; --chip-active-ink: #1a1a19;
+    --good: #2fbf4a; --good-bg: rgba(12, 163, 12, 0.16); --bad: #ef7676; --bad-bg: rgba(208, 59, 59, 0.16);
+    --warn-bg: rgba(250, 178, 25, 0.16); --warn-ink: #fab219;
+    --line: #f0efec; --bench: #898781; --bar: #3987e5;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+
+/* top bar */
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--hair); }
+.topbar-inner { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+.brand { font-family: var(--serif); font-size: 20px; font-weight: 500; letter-spacing: -0.01em; margin-right: auto; }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--card); border-radius: 999px; padding: 8px 16px;
+  font-weight: 500; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.btn.secondary { background: transparent; color: var(--ink); border-color: var(--hair); }
+.btn:hover { opacity: 0.88; }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent;
+  animation: spin 0.8s linear infinite; display: none; }
+.btn.busy .spinner { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+main { max-width: 1080px; margin: 0 auto; padding: 8px 20px 60px; }
+
+/* hero */
+.hero { padding: 28px 0 8px; }
+.eyebrow { color: var(--ink-2); font-size: 14px; }
+.balance { font-family: var(--serif); font-size: clamp(40px, 7vw, 60px); font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; margin: 6px 0 4px; }
+.delta { font-size: 15px; color: var(--ink-2); min-height: 24px; }
+.up { color: var(--good); } .down { color: var(--bad); }
+.chart { position: relative; margin-top: 20px; height: 280px; touch-action: pan-y; }
+.chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chart-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); }
+.legend .key { display: inline-flex; align-items: center; gap: 6px; }
+.legend .swatch-line { width: 18px; height: 0; border-top: 2px solid var(--line); }
+.legend .swatch-line.dash { border-top: 2px dashed var(--bench); }
+.tabs { display: inline-flex; gap: 4px; }
+.tab { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.tab:hover { background: var(--chip); }
+.tab.active { background: var(--chip-active); color: var(--chip-active-ink); }
+.tooltip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--hair); border-radius: 10px;
+  padding: 8px 10px; font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); white-space: nowrap; display: none; z-index: 2; }
+.tooltip .t-date { color: var(--muted); margin-bottom: 2px; }
+.tooltip .t-row { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
+
+/* stat cards */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 28px 0 12px; }
+.stat { background: var(--card); border: 1px solid var(--hair); border-radius: 16px; padding: 16px 18px; }
+.stat .label { color: var(--ink-2); font-size: 13px; }
+.stat .value { font-family: var(--serif); font-size: 28px; letter-spacing: -0.01em; margin: 2px 0; }
+.stat .sub { color: var(--muted); font-size: 12.5px; }
+
+/* cards */
+.card { background: var(--card); border: 1px solid var(--hair); border-radius: 20px; padding: 22px; margin-top: 16px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.card h2 { font-family: var(--serif); font-weight: 500; font-size: 22px; letter-spacing: -0.01em; margin: 0; }
+.card .subtitle { color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.two-col .card { margin-top: 16px; min-width: 0; }
+@media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; border-radius: 999px; padding: 4px 10px; }
+.pill.good { background: var(--good-bg); color: var(--good); }
+.pill.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.badge { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; border-radius: 6px; padding: 1px 6px; background: var(--chip); color: var(--ink-2); }
+.badge.new { background: color-mix(in srgb, var(--s1) 14%, transparent); color: var(--s1); }
+.badge.warn { background: var(--warn-bg); color: var(--warn-ink); }
+
+.segmented { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px; gap: 2px; margin-bottom: 12px; }
+.segmented button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+.segmented button.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.segmented .count { color: var(--muted); font-weight: 400; margin-left: 4px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip { border: 1px solid var(--hair); background: transparent; border-radius: 999px; padding: 4px 11px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.chip.active { background: var(--chip-active); color: var(--chip-active-ink); border-color: var(--chip-active); }
+
+/* idea list */
+.list { border-top: 1px solid var(--hair); }
+.row { border-bottom: 1px solid var(--hair); }
+.row-main { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 12px 4px; cursor: pointer; width: 100%; border: 0; background: none; text-align: left; }
+.row-main:hover { background: color-mix(in srgb, var(--chip) 55%, transparent); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font-size: 11.5px; font-weight: 600; color: var(--ink-2); }
+.name { font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.meta { color: var(--muted); font-size: 12.5px; }
+.right { text-align: right; font-variant-numeric: tabular-nums; }
+.right .big { font-weight: 500; }
+.record { text-align: right; font-size: 12.5px; color: var(--ink-2); min-width: 92px; }
+.details { display: none; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 20px; padding: 4px 4px 16px 58px; font-size: 13px; }
+.row.open .details { display: grid; }
+.details .k { color: var(--muted); font-size: 12px; }
+.empty { color: var(--muted); padding: 24px 4px; text-align: center; }
+@media (max-width: 640px) {
+  .row-main { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stat .value { font-size: 23px; }
+  .breadth-row { grid-template-columns: minmax(0, 120px) minmax(0, 1fr) auto; }
+  .segmented button { padding: 6px 10px; white-space: nowrap; }
+  #industryTable th:nth-child(n+5), #industryTable td:nth-child(n+5),
+  #holdingsTable th:nth-child(2), #holdingsTable td:nth-child(2),
+  #tradesTable th:nth-child(3), #tradesTable td:nth-child(3) { display: none; }
+  .record { display: none; }
+  .details { padding-left: 4px; }
+}
+
+/* industry breadth */
+.breadth-row { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 86px; gap: 10px; align-items: center; padding: 6px 0; font-size: 13.5px; }
+.breadth-track { height: 10px; background: var(--chip); border-radius: 4px; overflow: hidden; }
+.breadth-fill { height: 100%; background: var(--bar); border-radius: 4px; }
+.breadth-val { text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+
+/* allocation */
+.alloc-bar { display: flex; gap: 2px; height: 14px; margin: 6px 0 16px; }
+.alloc-bar span { display: block; height: 100%; }
+.alloc-bar span:first-child { border-radius: 4px 0 0 4px; }
+.alloc-bar span:last-child { border-radius: 0 4px 4px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 8px 6px; border-bottom: 1px solid var(--hair); }
+td { padding: 10px 6px; border-bottom: 1px solid var(--hair); vertical-align: middle; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 8px; vertical-align: -1px; }
+.table-wrap { overflow-x: auto; }
+.holdings-toggle { margin-top: 12px; }
+
+/* industry explorer */
+.explorer tr.ind-row { cursor: pointer; }
+.explorer tr.ind-row:hover td { background: color-mix(in srgb, var(--chip) 55%, transparent); }
+.explorer tr.ind-row.open td { background: var(--chip); border-bottom-color: transparent; }
+.explorer .chev { display: inline-block; width: 16px; color: var(--muted); transition: transform 0.15s; }
+.explorer tr.ind-row.open .chev { transform: rotate(90deg); }
+.explorer tr.detail > td { padding: 0 0 18px; background: var(--chip); border-bottom: 1px solid var(--hair); }
+.detail-inner { background: var(--card); border: 1px solid var(--hair); border-radius: 14px; margin: 0 10px; padding: 18px; }
+.detail-inner h3 { font-family: var(--serif); font-weight: 500; font-size: 17px; margin: 18px 0 8px; }
+.detail-inner h3:first-child { margin-top: 0; }
+.detail-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 24px; }
+@media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr; } }
+.mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 6px; }
+.mini-stat { border: 1px solid var(--hair); border-radius: 12px; padding: 10px 12px; }
+.mini-stat .label { color: var(--ink-2); font-size: 12px; }
+.mini-stat .value { font-family: var(--serif); font-size: 21px; }
+.mini-stat .sub { color: var(--muted); font-size: 11.5px; }
+.momo { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.momo-track { position: relative; width: 64px; height: 8px; }
+.momo-track::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: 0.6; }
+.momo-bar { position: absolute; top: 0; height: 8px; border-radius: 2px; }
+.sort-btn { border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; padding: 0; }
+.sort-btn.active { color: var(--ink); }
+.linkish { border: 0; background: none; color: var(--s1); font: inherit; font-size: 13px; cursor: pointer; padding: 8px 0 0; }
+.breadth-row { cursor: pointer; border-radius: 6px; }
+.breadth-row:hover { background: color-mix(in srgb, var(--chip) 55%, transparent); }
+
+footer { color: var(--muted); font-size: 12.5px; margin-top: 28px; line-height: 1.6; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0; transition: all 0.25s ease;
+  background: var(--ink); color: var(--card); border-radius: 12px; padding: 12px 16px; font-size: 14px; max-width: min(560px, calc(100vw - 32px));
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18); z-index: 20; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast pre { margin: 8px 0 0; font-size: 11.5px; white-space: pre-wrap; opacity: 0.8; max-height: 160px; overflow: auto; }
+@media (max-width: 640px) {
+  .topbar-inner { padding: 12px 16px; }
+  main { padding: 4px 16px 48px; }
+  .btn .label-long { display: none; }
+  .chart { height: 220px; }
+  .card { padding: 18px 16px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Long-Term Quant</div>
+    <button class="btn secondary" id="runBacktest"><span class="spinner"></span><span>Rerun <span class="label-long">backtest</span></span></button>
+    <button class="btn" id="runScan"><span class="spinner"></span><span>Run scan</span></button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="eyebrow" id="eyebrow">Simulated portfolio</div>
+    <div class="balance" id="balance">—</div>
+    <div class="delta" id="delta"></div>
+    <div class="chart" id="equityChart"><div class="tooltip" id="equityTip"></div></div>
+    <div class="chart-foot">
+      <div class="legend">
+        <span class="key"><span class="swatch-line"></span>Your strategy</span>
+        <span class="key"><span class="swatch-line dash"></span><span id="benchName">TSX</span></span>
+        <span class="key" id="depositKey" hidden><span class="swatch-line" style="border-top:2px dotted var(--muted)"></span>Your deposits</span>
+      </div>
+      <div class="tabs" id="rangeTabs" role="tablist"></div>
+    </div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="card" id="forwardCard" hidden>
+    <div class="card-head">
+      <div><h2>Forward test: rules account</h2><div class="subtitle" id="forwardSubtitle"></div></div>
+      <span id="forwardPill"></span>
+    </div>
+    <div class="stats" id="forwardStats" style="margin:0 0 14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+    <div id="forwardSwing" class="subtitle" style="margin-bottom:10px"></div>
+    <div class="table-wrap"><table id="forwardOrders"></table></div>
+  </section>
+
+  <section class="card" id="forwardAiCard" hidden>
+    <div class="card-head">
+      <div><h2>Forward test: AI-picked account</h2><div class="subtitle" id="forwardAiSubtitle"></div></div>
+      <span id="forwardAiPill"></span>
+    </div>
+    <div id="forwardAiCompare" style="margin:0 0 14px"></div>
+    <div class="stats" id="forwardAiStats" style="margin:0 0 14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+    <div id="forwardAiSwing" class="subtitle" style="margin-bottom:10px"></div>
+    <div class="table-wrap"><table id="forwardAiOrders"></table></div>
+  </section>
+
+  <section class="card" id="ideasCard">
+    <div class="card-head">
+      <div>
+        <h2>Today's trade ideas</h2>
+        <div class="subtitle" id="scanSubtitle">Run a scan to find setups.</div>
+      </div>
+      <span id="marketPill"></span>
+    </div>
+    <div class="segmented" id="ideaTabs" role="tablist"></div>
+    <div class="chips" id="ideaChips"></div>
+    <div class="list" id="ideaList"></div>
+  </section>
+
+  <section class="card" id="explorerCard">
+    <div class="card-head">
+      <div><h2>Industry explorer</h2>
+        <div class="subtitle">Click an industry to break it down: today's stocks, your dividend holdings, and swing history</div></div>
+    </div>
+    <div class="table-wrap"><table id="explorerTable" class="explorer"></table></div>
+  </section>
+
+  <div class="two-col">
+    <section class="card">
+      <div class="card-head"><div><h2>Industries today</h2>
+        <div class="subtitle">Share of each industry's stocks with a buy signal</div></div></div>
+      <div id="breadth"></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><div><h2>Dividends received</h2>
+        <div class="subtitle">Per year, reinvested automatically</div></div></div>
+      <div class="chart" id="divChart" style="height:240px;margin-top:0"><div class="tooltip" id="divTip"></div></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div><h2>Dividend portfolio</h2><div class="subtitle" id="coreSubtitle"></div></div>
+    </div>
+    <div class="alloc-bar" id="allocBar"></div>
+    <div class="table-wrap"><table id="industryTable"></table></div>
+    <button class="btn secondary holdings-toggle" id="holdingsToggle">Show all holdings</button>
+    <div class="table-wrap" id="holdingsWrap" hidden><table id="holdingsTable"></table></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Swing trades</h2>
+      <div class="subtitle">Profits from these are swept into the dividend portfolio</div></div></div>
+    <div id="openSwing"></div>
+    <div class="table-wrap"><table id="tradesTable"></table></div>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (selector, root = document) => root.querySelector(selector);
+const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = (value, currency = "CAD", digits = 0) =>
+  value == null || isNaN(value) ? "—" :
+  new Intl.NumberFormat("en-CA", { style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+const compact = (value) => "$" + new Intl.NumberFormat("en-CA", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+const pct = (value, digits = 1, sign = false) =>
+  value == null || isNaN(value) ? "—" : (sign && value > 0 ? "+" : "") + (value * 100).toFixed(digits) + "%";
+const currencyOf = (ticker) => (ticker.endsWith(".TO") ? "CAD" : "USD");
+const fmtDate = (iso, opts = { month: "short", day: "numeric", year: "numeric" }) =>
+  new Date(iso + (iso.length === 10 ? "T12:00:00" : "")).toLocaleDateString("en-CA", opts);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const NS = "http://www.w3.org/2000/svg";
+
+const RANGES = [["1M", 31], ["3M", 92], ["1Y", 366], ["5Y", 1827], ["ALL", Infinity]];
+const state = {
+  data: null, points: [], range: "1Y", ideaTab: "buy", sector: "All", openRows: new Set(),
+  openIndustry: null, industrySort: "signal", industryShowAll: false,
+};
+
+// ---------------------------------------------------------------- loading
+
+async function load() {
+  const response = await fetch("/api/data");
+  state.data = await response.json();
+  const cols = state.data.equity_columns || [];
+  const at = (name) => cols.indexOf(name);
+  const col = (r, name) => (at(name) >= 0 ? r[at(name)] : null);
+  state.points = (state.data.equity || []).map((r) => ({
+    d: r[0], t: Date.parse(r[0] + "T12:00:00"), v: r[at("equity")], core: r[at("core_value")],
+    swing: r[at("swing_value")], b: col(r, "benchmark"),
+    twr: col(r, "twr_index"), dep: col(r, "cumulative_deposits"), bdca: col(r, "benchmark_same_deposits"),
+  }));
+  const pts = state.points;
+  // With monthly deposits, value growth includes your own money, so returns use the time-weighted index
+  // and the benchmark line shows the same deposits invested in the TSX index.
+  state.hasDeposits = pts.length > 1 && pts[0].dep != null && pts[pts.length - 1].dep > pts[0].dep + 1;
+  const linked = decodeURIComponent((location.hash.match(/industry=([^&]+)/) || [])[1] || "");
+  if (linked && state.openIndustry === null) state.openIndustry = linked;
+  renderAll();
+  resumeJobs();
+}
+
+function renderAll() {
+  renderRangeTabs();
+  renderHero();
+  renderStats();
+  renderForward();
+  renderIdeas();
+  renderExplorer();
+  renderBreadth();
+  renderDividends();
+  renderCore();
+  renderTrades();
+  renderFooter();
+}
+
+// ---------------------------------------------------------------- hero + equity chart
+
+function rangePoints() {
+  const pts = state.points;
+  if (!pts.length) return [];
+  const days = RANGES.find(([key]) => key === state.range)[1];
+  const cutoff = pts[pts.length - 1].t - days * 864e5;
+  return pts.filter((p) => p.t >= cutoff);
+}
+
+function renderRangeTabs() {
+  $("#rangeTabs").innerHTML = RANGES.map(([key]) =>
+    `<button class="tab ${key === state.range ? "active" : ""}" role="tab" aria-selected="${key === state.range}" data-range="${key}">${key}</button>`).join("");
+  $("#rangeTabs").querySelectorAll("button").forEach((button) =>
+    button.addEventListener("click", () => { state.range = button.dataset.range; renderRangeTabs(); renderHero(); }));
+}
+
+function setHeadline(point, first, label) {
+  $("#balance").textContent = money(point.v);
+  // Gain excludes money you deposited; % is time-weighted, so deposits don't count as performance.
+  const deposited = state.hasDeposits ? (point.dep ?? 0) - (first.dep ?? 0) : 0;
+  const change = point.v - first.v - deposited;
+  const changePct = state.hasDeposits && point.twr && first.twr ? point.twr / first.twr - 1 : point.v / first.v - 1;
+  const cls = change >= 0 ? "up" : "down";
+  const arrow = change >= 0 ? "▲" : "▼";
+  let bench = "";
+  if (point.b != null && first.b != null) {
+    const benchPct = point.b / first.b - 1;
+    bench = ` <span style="color:var(--muted)">· ${esc(state.data.benchmark_ticker)} ${pct(benchPct, 1, true)}</span>`;
+  }
+  const deposits = deposited > 0 ? ` <span style="color:var(--muted)">· plus ${money(deposited)} deposited</span>` : "";
+  $("#delta").innerHTML = `<span class="${cls}">${arrow} ${money(Math.abs(change))} (${pct(changePct, 2, true)})</span> ${esc(label)}${bench}${deposits}`;
+}
+
+function renderHero() {
+  const pts = rangePoints();
+  const data = state.data;
+  $("#benchName").textContent = state.hasDeposits
+    ? `Same deposits in ${data.benchmark_ticker || "the TSX"} (TSX index)`
+    : `${data.benchmark_ticker || "Benchmark"} (TSX index, scaled)`;
+  $("#depositKey").hidden = !state.hasDeposits;
+  const plan = data.monthly_deposit > 0 ? ` + ${money(data.monthly_deposit)}/month` : "";
+  $("#eyebrow").textContent = `Simulated portfolio · started with ${money(data.starting_cash)} in ${String(data.start_date).slice(0, 4)}${plan}`;
+  if (!pts.length) {
+    $("#balance").textContent = "—";
+    $("#delta").textContent = "No backtest yet. Click “Rerun backtest”.";
+    return;
+  }
+  const label = state.range === "ALL" ? "all time" : `past ${ { "1M": "month", "3M": "3 months", "1Y": "year", "5Y": "5 years" }[state.range] }`;
+  setHeadline(pts[pts.length - 1], pts[0], label);
+  drawEquity(pts, label);
+}
+
+function niceTicks(min, max, count = 4) {
+  const span = max - min || 1;
+  const raw = span / count;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const norm = raw / mag;
+  const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  const ticks = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) ticks.push(v);
+  return ticks;
+}
+
+function el(tag, attrs = {}, parent) {
+  const node = document.createElementNS(NS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+function drawEquity(pts, label) {
+  const box = $("#equityChart");
+  box.querySelector("svg")?.remove();
+  const W = box.clientWidth, H = box.clientHeight;
+  const pad = { top: 10, right: 58, bottom: 26, left: 2 };
+  const first = pts[0];
+  const scale = first.b ? first.v / first.b : null;  // index the TSX to the strategy's value at range start
+  // With deposits: the same deposits invested in the TSX index, and a dotted line of what you put in.
+  const bench = state.hasDeposits
+    ? pts.map((p) => p.bdca)
+    : pts.map((p) => (p.b != null && scale ? p.b * scale : null));
+  const deposits = state.hasDeposits ? pts.map((p) => p.dep) : [];
+  const values = pts.map((p) => p.v).concat(bench.filter((v) => v != null), deposits.filter((v) => v != null));
+  let lo = Math.min(...values), hi = Math.max(...values);
+  const padY = (hi - lo) * 0.08 || hi * 0.02;
+  lo -= padY; hi += padY;
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t || t0 + 1;
+  const x = (t) => pad.left + ((t - t0) / (t1 - t0 || 1)) * (W - pad.left - pad.right);
+  const y = (v) => pad.top + (1 - (v - lo) / (hi - lo)) * (H - pad.top - pad.bottom);
+
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Portfolio value, ${label}` });
+  box.prepend(svg);
+
+  for (const tick of niceTicks(lo, hi, 4)) {
+    el("line", { x1: pad.left, x2: W - pad.right, y1: y(tick), y2: y(tick), stroke: css("--grid"), "stroke-width": 1 }, svg);
+    const text = el("text", { x: W - pad.right + 8, y: y(tick) + 4, fill: css("--muted"), "font-size": 11.5 }, svg);
+    text.textContent = compact(tick);
+  }
+  const labelCount = W < 500 ? 3 : 5;
+  for (let i = 0; i < labelCount; i++) {
+    const p = pts[Math.round((i / (labelCount - 1)) * (pts.length - 1))];
+    const anchor = i === 0 ? "start" : i === labelCount - 1 ? "end" : "middle";
+    const text = el("text", { x: x(p.t), y: H - 6, fill: css("--muted"), "font-size": 11.5, "text-anchor": anchor }, svg);
+    text.textContent = fmtDate(p.d, state.range === "1M" || state.range === "3M" ? { month: "short", day: "numeric" } : { month: "short", year: "numeric" });
+  }
+
+  const path = (series) => {
+    let d = "", pen = false;
+    series.forEach((v, i) => {
+      if (v == null) { pen = false; return; }
+      d += `${pen ? "L" : "M"}${x(pts[i].t).toFixed(1)},${y(v).toFixed(1)}`;
+      pen = true;
+    });
+    return d;
+  };
+  const gradientId = "fade";
+  const defs = el("defs", {}, svg);
+  const gradient = el("linearGradient", { id: gradientId, x1: 0, x2: 0, y1: 0, y2: 1 }, defs);
+  el("stop", { offset: "0%", "stop-color": css("--line"), "stop-opacity": 0.10 }, gradient);
+  el("stop", { offset: "100%", "stop-color": css("--line"), "stop-opacity": 0 }, gradient);
+  const linePath = path(pts.map((p) => p.v));
+  el("path", { d: `${linePath}L${x(t1)},${H - pad.bottom}L${x(t0)},${H - pad.bottom}Z`, fill: `url(#${gradientId})` }, svg);
+  el("path", { d: path(bench), fill: "none", stroke: css("--bench"), "stroke-width": 1.5, "stroke-dasharray": "4 4" }, svg);
+  if (deposits.length) {
+    el("path", { d: path(deposits), fill: "none", stroke: css("--muted"), "stroke-width": 1.5, "stroke-dasharray": "1 3",
+                 "stroke-linecap": "round" }, svg);
+  }
+  el("path", { d: linePath, fill: "none", stroke: css("--line"), "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+
+  // hover: crosshair + dots + tooltip, and the headline follows the cursor like a brokerage app
+  const cross = el("line", { y1: pad.top, y2: H - pad.bottom, stroke: css("--muted"), "stroke-width": 1, visibility: "hidden" }, svg);
+  const dotB = el("circle", { r: 4, fill: css("--bench"), stroke: css("--card"), "stroke-width": 2, visibility: "hidden" }, svg);
+  const dot = el("circle", { r: 5, fill: css("--line"), stroke: css("--card"), "stroke-width": 2, visibility: "hidden" }, svg);
+  const hit = el("rect", { x: 0, y: 0, width: W, height: H, fill: "transparent" }, svg);
+  const tip = $("#equityTip");
+
+  const show = (event) => {
+    const rect = svg.getBoundingClientRect();
+    const px = event.clientX - rect.left;
+    const t = t0 + ((px - pad.left) / (W - pad.left - pad.right)) * (t1 - t0);
+    let lo2 = 0, hi2 = pts.length - 1;
+    while (lo2 < hi2) { const mid = (lo2 + hi2) >> 1; if (pts[mid].t < t) lo2 = mid + 1; else hi2 = mid; }
+    const i = lo2 > 0 && Math.abs(pts[lo2 - 1].t - t) < Math.abs(pts[lo2].t - t) ? lo2 - 1 : lo2;
+    const p = pts[i];
+    const cx = x(p.t);
+    for (const node of [cross, dot]) node.setAttribute("visibility", "visible");
+    cross.setAttribute("x1", cx); cross.setAttribute("x2", cx);
+    dot.setAttribute("cx", cx); dot.setAttribute("cy", y(p.v));
+    if (bench[i] != null) { dotB.setAttribute("visibility", "visible"); dotB.setAttribute("cx", cx); dotB.setAttribute("cy", y(bench[i])); }
+    tip.style.display = "block";
+    tip.innerHTML = `<div class="t-date">${fmtDate(p.d)}</div>
+      <div class="t-row"><span>Strategy</span><b>${money(p.v)}</b></div>
+      <div class="t-row"><span style="color:var(--ink-2)">Dividend core</span><span>${money(p.core)}</span></div>
+      <div class="t-row"><span style="color:var(--ink-2)">Swing sleeve</span><span>${money(p.swing)}</span></div>
+      ${bench[i] != null ? `<div class="t-row"><span style="color:var(--ink-2)">${state.hasDeposits ? "Same deposits in " : ""}${esc(state.data.benchmark_ticker)}</span><span>${money(bench[i])}</span></div>` : ""}
+      ${state.hasDeposits && p.dep != null ? `<div class="t-row"><span style="color:var(--ink-2)">Deposited</span><span>${money(p.dep)}</span></div>` : ""}`;
+    const tipW = tip.offsetWidth;
+    tip.style.left = Math.min(Math.max(cx - tipW / 2, 0), W - tipW) + "px";
+    tip.style.top = "-6px";
+    setHeadline(p, first, `since ${fmtDate(first.d)}`);
+  };
+  const hide = () => {
+    for (const node of [cross, dot, dotB]) node.setAttribute("visibility", "hidden");
+    tip.style.display = "none";
+    setHeadline(pts[pts.length - 1], first, label);
+  };
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  hit.addEventListener("pointerleave", hide);
+}
+
+// ---------------------------------------------------------------- stat cards
+
+function renderStats() {
+  const s = state.data.summary;
+  if (!s) { $("#stats").innerHTML = ""; return; }
+  const cards = [];
+  if (state.hasDeposits && s.total_deposited) {
+    const vsIndex = s.ending_equity / s.benchmark_same_deposits - 1;
+    cards.push(["You deposited", money(s.total_deposited),
+      `worth ${money(s.ending_equity)} · same deposits in ${esc(state.data.benchmark_ticker)}: ${money(s.benchmark_same_deposits)} (${pct(vsIndex, 1, true)})`]);
+  }
+  cards.push(
+    ["Average yearly return", pct(s.CAGR, 1), `${esc(state.data.benchmark_ticker)} ${pct(s.benchmark_CAGR, 1)} per year${state.hasDeposits ? " · time-weighted" : ""}`],
+    ["Dividend income", `${money(s.forward_annual_dividends)}<span style="font-size:16px;color:var(--muted)">/yr</span>`,
+      `≈ ${money(s.forward_annual_dividends / 12)} a month · ${pct(s.forward_dividend_yield, 2)} yield`],
+    ["Swing profits → dividends", money(s.swept_to_core),
+      `${s.swing_trades} trades · ${pct(s.swing_win_rate, 0)} winners · avg ${pct(s.swing_avg_return, 1, true)}`],
+    ["Dividends collected", money(s.cumulative_dividends), "All reinvested since the start"],
+    ["Worst drop", pct(s.max_drawdown, 1), `${esc(state.data.benchmark_ticker)} worst drop ${pct(s.benchmark_max_drawdown, 1)}`],
+  );
+  $("#stats").innerHTML = cards.map(([label, value, sub]) =>
+    `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`).join("");
+}
+
+// ---------------------------------------------------------------- forward test (live_trader.py)
+
+// Return on the money deposited, and vs the TSX over the same days, for one forward-test account.
+function forwardResult(f) {
+  const journal = f?.journal || [];
+  const last = journal[journal.length - 1];
+  const first = journal[0];
+  if (!last) return null;
+  const deposited = last.cumulative_deposits || f.cumulative_deposits || f.capital;
+  const change = last.equity / deposited - 1;
+  const tsx = first && first.benchmark_close ? last.benchmark_close / first.benchmark_close - 1 : null;
+  return { change, tsx, days: journal.length, since: f.created, value: last.equity };
+}
+
+function renderForward() {
+  renderForwardCard(state.data.forward, "forward");
+  renderForwardCard(state.data.forward_ai, "forwardAi");
+  renderForwardComparison();
+}
+
+function renderForwardComparison() {
+  const box = $("#forwardAiCompare");
+  const rules = forwardResult(state.data.forward), ai = forwardResult(state.data.forward_ai);
+  if (!rules || !ai) { box.innerHTML = ""; return; }
+  if (ai.days < 5 || rules.days < 5) {
+    box.innerHTML = `<div class="pill" style="background:var(--chip);color:var(--ink-2);font-size:13.5px">Too early to compare:
+      the AI account has ${ai.days} day(s) of results and the rules account ${rules.days}. Check back in a few weeks;
+      really, give it months.</div>`;
+    return;
+  }
+  const lead = ai.change - rules.change;
+  const who = Math.abs(lead) < 0.0005 ? "Tied so far" : lead > 0 ? "AI is ahead" : "Rules are ahead";
+  box.innerHTML = `<div class="pill ${lead >= 0 ? "good" : "warn"}" style="font-size:13.5px">${who}:
+      AI ${pct(ai.change, 2, true)} (since ${fmtDate(ai.since, { month: "short", day: "numeric" })}) vs rules
+      ${pct(rules.change, 2, true)} (since ${fmtDate(rules.since, { month: "short", day: "numeric" })}) on money deposited</div>
+    <div class="meta" style="margin-top:6px">Same money, costs and risk limits; only the stock picking differs. Give it months:
+      a few weeks of results are mostly luck.</div>`;
+}
+
+function renderForwardCard(f, prefix) {
+  const q = (part) => $(`#${prefix}${part}`);
+  q("Card").hidden = !f;
+  if (!f) return;
+  const modeName = { sim: "simulated fills at real closing prices", "ibkr-paper": "Interactive Brokers paper account",
+    "ibkr-live": "Interactive Brokers LIVE account", ai: "AI picks the stocks · simulated fills at real closing prices" }[f.mode] || f.mode;
+  const journal = f.journal || [];
+  const last = journal[journal.length - 1];
+  const first = journal[0];
+  q("Subtitle").textContent = `Running since ${fmtDate(f.created)} · ${modeName} · last close ${last ? fmtDate(last.date) : "—"}`;
+  // Up to date if its last close is within a few days; otherwise nothing has run it (no schedule, PC off...).
+  const staleDays = last ? (Date.now() - Date.parse(last.date + "T21:00:00")) / 864e5 : Infinity;
+  q("Pill").innerHTML = f.paused
+    ? `<span class="pill warn">⏸ Paused · delete live/PAUSE to resume</span>`
+    : staleDays <= 4
+      ? `<span class="pill good">● Up to date</span>`
+      : `<span class="pill warn">⚠ Not run since ${last ? fmtDate(last.date, { month: "short", day: "numeric" }) : "start"} · run_daily.bat</span>`;
+
+  const deposited = (last && last.cumulative_deposits) || f.cumulative_deposits || f.capital;
+  const change = last ? last.equity / deposited - 1 : 0;  // gain on the money you've put in
+  const tsx = last && first && first.benchmark_close ? last.benchmark_close / first.benchmark_close - 1 : null;
+  const wins = (f.closed_trades || []).filter((t) => t.pnl > 0).length;
+  const cards = [
+    ["Value", last ? money(last.equity) : money(f.capital),
+      `${change >= 0 ? "▲" : "▼"} ${pct(Math.abs(change), 2)} on ${money(deposited)} deposited`],
+    ["vs TSX since start", tsx == null ? "—" : pct(change - tsx, 2, true), tsx == null ? "" : `${state.data.benchmark_ticker} ${pct(tsx, 2, true)}`],
+    ["Holdings", `${f.core_holdings} + ${f.swing_positions.length}`, "dividend stocks + swing trades"],
+    ["Swing → dividends", money(f.cumulative_swept), `${(f.closed_trades || []).length} closed trades · ${wins} winners`],
+    ["Dividends", money(f.cumulative_dividends), "reinvested"],
+  ];
+  q("Stats").innerHTML = cards.map(([label, value, sub]) =>
+    `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`).join("");
+
+  q("Swing").innerHTML = f.swing_positions.length
+    ? "Open swing trades: " + f.swing_positions.map((p) => `<b>${esc(p.ticker)}</b> since ${fmtDate(p.entry_date, { month: "short", day: "numeric" })}`).join(" · ")
+    : "No open swing trades.";
+
+  const pending = f.pending || [];
+  const allRows = pending.length
+    ? pending.map((o) => ({ ...o, status: "waiting for close" }))
+    : (f.recent_orders || []).slice().reverse();
+  const rows = allRows.slice(0, 8);
+  const more = allRows.length - rows.length;
+  q("Orders").innerHTML = rows.length
+    ? `<thead><tr><th>${pending.length ? "Orders filling at the next close" : "Recent orders"}</th><th>Sleeve</th><th>Reason</th>
+        <th class="num">Shares</th><th class="num">≈ Value</th><th>Status</th></tr></thead><tbody>` +
+      rows.map((o) => `<tr><td><b>${o.action === "BUY" ? "Buy" : "Sell"} ${esc(o.ticker)}</b>
+          <div class="meta">${esc(state.data.names?.[o.ticker] || "")}</div></td>
+        <td>${o.sleeve === "core" ? "Dividend" : "Swing"}</td><td style="color:var(--ink-2)">${esc(String(o.reason).replace(/_/g, " "))}</td>
+        <td class="num">${Number(o.quantity).toLocaleString("en-CA", { maximumFractionDigits: 2 })}</td>
+        <td class="num">${money(o.quantity * o.est_price_cad)}</td>
+        <td style="color:var(--ink-2)">${esc(o.status || "")}</td></tr>`).join("") +
+      (more > 0 ? `<tr><td colspan="6" style="color:var(--muted)">+ ${more} more (see live/orders_${esc(f.mode)}.csv)</td></tr>` : "") +
+      "</tbody>"
+    : "";
+}
+
+// ---------------------------------------------------------------- trade ideas
+
+function ideaGroups() {
+  const ideas = state.data.scan?.ideas || [];
+  const buys = ideas.filter((i) => i.status === "1 BUY");
+  return {
+    buy: buys.filter((i) => i.shortlisted !== false),
+    watch: ideas.filter((i) => i.status === "2 WATCH"),
+    all: buys,
+  };
+}
+
+function renderIdeas() {
+  const scan = state.data.scan;
+  if (!scan) {
+    $("#scanSubtitle").textContent = "No scan yet. Click “Run scan” to research today's setups.";
+    $("#ideaTabs").innerHTML = $("#ideaChips").innerHTML = "";
+    $("#ideaList").innerHTML = `<div class="empty">Nothing here yet.</div>`;
+    return;
+  }
+  const meta = scan.meta || {};
+  $("#scanSubtitle").textContent = `${meta.scanned ? meta.scanned + " stocks scanned" : "Scan"} · ${fmtDate(meta.as_of)} · ${(meta.setups || []).join(" + ")} setup`;
+  $("#marketPill").innerHTML = meta.market_ok === false
+    ? `<span class="pill warn">⚠ ${esc(meta.market)} below its 200-day average · strategy pauses new trades</span>`
+    : meta.market_ok ? `<span class="pill good">✓ Market uptrend · new trades allowed</span>` : "";
+
+  const groups = ideaGroups();
+  const tabs = [["buy", "Top picks"], ["watch", "Watchlist"], ["all", "All signals"]];
+  $("#ideaTabs").innerHTML = tabs.map(([key, label]) =>
+    `<button role="tab" aria-selected="${state.ideaTab === key}" class="${state.ideaTab === key ? "active" : ""}" data-tab="${key}">${label}<span class="count">${groups[key].length}</span></button>`).join("");
+  $("#ideaTabs").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    state.ideaTab = b.dataset.tab; state.sector = "All"; renderIdeas();
+  }));
+
+  const list = groups[state.ideaTab];
+  const sectors = ["All", ...[...new Set(list.map((i) => i.sector || "Other / Unknown"))].sort()];
+  if (!sectors.includes(state.sector)) state.sector = "All";
+  $("#ideaChips").innerHTML = sectors.map((s) => `<button class="chip ${s === state.sector ? "active" : ""}" data-sector="${esc(s)}">${esc(s)}</button>`).join("");
+  $("#ideaChips").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { state.sector = b.dataset.sector; renderIdeas(); }));
+
+  const shown = list.filter((i) => state.sector === "All" || (i.sector || "Other / Unknown") === state.sector);
+  $("#ideaList").innerHTML = shown.length ? shown.map(ideaRow).join("") : `<div class="empty">No ideas in this view.</div>`;
+  $("#ideaList").querySelectorAll(".row-main").forEach((button) => button.addEventListener("click", () => {
+    const row = button.parentElement;
+    row.classList.toggle("open");
+    button.setAttribute("aria-expanded", row.classList.contains("open"));
+    if (row.classList.contains("open")) state.openRows.add(row.dataset.ticker); else state.openRows.delete(row.dataset.ticker);
+  }));
+}
+
+function ideaRow(i) {
+  const cur = currencyOf(i.ticker);
+  const momentum = i.momentum_3m;
+  const up = momentum >= 0;
+  const initials = i.ticker.replace(/\.TO$/, "").replace(/-.*/, "").slice(0, 4);
+  const record = i.hist_trades
+    ? `<b>${pct(i.hist_win_rate, 0)}</b> winners<br><span style="color:var(--muted)">${i.hist_trades} past · avg ${pct(i.hist_avg_return, 1, true)}</span>`
+    : `<span style="color:var(--muted)">No history</span>`;
+  const earningsSoon = i.warning === "EARNINGS SOON";
+  const open = state.openRows.has(i.ticker);
+  const positionValue = i.shares * i.close;
+  return `<div class="row ${open ? "open" : ""}" data-ticker="${esc(i.ticker)}">
+    <button class="row-main" aria-expanded="${open}">
+      <div class="avatar">${esc(initials)}</div>
+      <div>
+        <div class="name">${esc(i.name || i.ticker)} ${i.new ? '<span class="badge new">NEW</span>' : ""} ${earningsSoon ? '<span class="badge warn">⚠ Earnings soon</span>' : ""}</div>
+        <div class="meta">${esc(i.ticker)} · ${esc(i.sector || "—")} · ${esc(i.setup)}</div>
+      </div>
+      <div class="record">${record}</div>
+      <div class="right"><div class="big">${money(i.close, cur, 2)}</div>
+        <div class="${up ? "up" : "down"}" style="font-size:12.5px">${up ? "▲" : "▼"} ${pct(Math.abs(momentum), 1)} 3 mo</div></div>
+    </button>
+    <div class="details">
+      <div><div class="k">Suggested size</div>~${i.shares} shares · ${money(positionValue, cur)}</div>
+      <div><div class="k">Stop loss</div>${i.stop_price != null ? money(i.stop_price, cur, 2) : "None"}</div>
+      <div><div class="k">When to sell</div>${esc(i.exit_rule)}</div>
+      <div><div class="k">Next earnings</div>${i.next_earnings ? fmtDate(i.next_earnings) : "—"}${earningsSoon ? " ⚠" : ""}</div>
+      <div><div class="k">RSI · above 200-day avg</div>${i.rsi?.toFixed(0)} · ${pct(i.pct_above_200d, 1, true)}</div>
+      <div><div class="k">Trading volume</div>${money(i.dollar_volume_m * 1e6, cur)}/day</div>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- industry explorer
+
+const median = (values) => {
+  const v = values.filter((x) => x != null && !isNaN(x)).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const mid = v.length >> 1;
+  return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+};
+
+function industryData() {
+  const map = state.data.core_to_standard || {};
+  const standard = (sector) => map[sector] || sector;
+  const stocks = state.data.scan?.all || [];
+  const core = (state.data.positions || []).filter((p) => p.sleeve === "core").map((p) => ({ ...p, industry: standard(p.sector) }));
+  const coreTotal = core.reduce((s, p) => s + p.market_value, 0);
+  const swing = state.data.swing_by_industry || {};
+  const names = new Set([...stocks.map((s) => s.sector), ...core.map((p) => p.industry), ...Object.keys(swing)]);
+  names.delete("Other / Unknown");
+
+  return [...names].map((industry) => {
+    const list = stocks.filter((s) => s.sector === industry);
+    const holdings = core.filter((p) => p.industry === industry);
+    const value = holdings.reduce((s, p) => s + p.market_value, 0);
+    const best = list.reduce((a, b) => (b.momentum_3m != null && (a == null || b.momentum_3m > a.momentum_3m) ? b : a), null);
+    return {
+      industry,
+      stocks: list,
+      scanned: list.length,
+      buys: list.filter((s) => s.status === "Buy").length,
+      watch: list.filter((s) => s.status === "Watch").length,
+      uptrend: list.length ? list.filter((s) => s.uptrend).length / list.length : null,
+      medianMomentum: median(list.map((s) => s.momentum_3m)),
+      best,
+      holdings,
+      coreWeight: coreTotal ? value / coreTotal : 0,
+      coreValue: value,
+      income: holdings.reduce((s, p) => s + (p.forward_annual_income || 0), 0),
+      swing: swing[industry] || null,
+    };
+  }).sort((a, b) => (b.scanned ? b.buys / b.scanned : -1) - (a.scanned ? a.buys / a.scanned : -1) || b.coreWeight - a.coreWeight);
+}
+
+function renderExplorer() {
+  const rows = industryData();
+  const table = $("#explorerTable");
+  if (!rows.length) { table.innerHTML = `<tr><td class="empty">Run a scan and a backtest to fill this in.</td></tr>`; return; }
+  const head = `<thead><tr><th>Industry</th><th class="num">Buy signals today</th><th class="num">In uptrend</th>
+    <th class="num">Median 3-mo move</th><th class="num">Your dividend weight</th><th class="num">Dividend income</th>
+    <th class="num">Swing history</th></tr></thead>`;
+  const body = rows.map((r) => {
+    const open = state.openIndustry === r.industry;
+    const signal = r.scanned ? `<b>${r.buys}</b> of ${r.scanned} · ${pct(r.buys / r.scanned, 0)}` : "—";
+    const swing = r.swing ? `${r.swing.trades} trades · ${pct(r.swing.win_rate, 0)} wins` : "—";
+    const momentum = r.medianMomentum == null ? "—"
+      : `<span class="${r.medianMomentum >= 0 ? "up" : "down"}">${r.medianMomentum >= 0 ? "▲" : "▼"} ${pct(Math.abs(r.medianMomentum), 1)}</span>`;
+    return `<tr class="ind-row ${open ? "open" : ""}" data-industry="${esc(r.industry)}" tabindex="0" role="button" aria-expanded="${open}">
+        <td><span class="chev">›</span><b>${esc(r.industry)}</b></td>
+        <td class="num">${signal}</td>
+        <td class="num">${r.uptrend == null ? "—" : pct(r.uptrend, 0)}</td>
+        <td class="num">${momentum}</td>
+        <td class="num">${r.coreWeight ? pct(r.coreWeight, 1) : "—"}</td>
+        <td class="num">${r.income ? money(r.income) + "/yr" : "—"}</td>
+        <td class="num">${swing}</td>
+      </tr>${open ? `<tr class="detail"><td colspan="7">${industryDetail(r)}</td></tr>` : ""}`;
+  }).join("");
+  table.innerHTML = head + "<tbody>" + body + "</tbody>";
+
+  const toggle = (row) => {
+    const name = row.dataset.industry;
+    state.openIndustry = state.openIndustry === name ? null : name;
+    state.industryShowAll = false;
+    renderExplorer();
+  };
+  table.querySelectorAll("tr.ind-row").forEach((row) => {
+    row.addEventListener("click", () => toggle(row));
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(row); } });
+  });
+  table.querySelectorAll(".sort-btn").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation(); state.industrySort = b.dataset.sort; renderExplorer();
+  }));
+  table.querySelector(".show-all")?.addEventListener("click", (e) => {
+    e.stopPropagation(); state.industryShowAll = !state.industryShowAll; renderExplorer();
+  });
+}
+
+function openIndustry(name) {
+  state.openIndustry = name;
+  state.industryShowAll = false;
+  renderExplorer();
+  $("#explorerCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function momentumCell(value, scale) {
+  if (value == null) return "—";
+  const width = Math.min(Math.abs(value) / (scale || 1), 1) * 32;
+  const up = value >= 0;
+  const bar = `<span class="momo-bar" style="${up ? "left:50%" : `left:calc(50% - ${width}px)`};width:${width}px;background:var(${up ? "--s1" : "--s8"})"></span>`;
+  return `<span class="momo"><span class="${up ? "up" : "down"}">${up ? "▲" : "▼"} ${pct(Math.abs(value), 1)}</span><span class="momo-track">${bar}</span></span>`;
+}
+
+function industryDetail(r) {
+  const sorters = {
+    signal: (a, b) => ({ Buy: 0, Watch: 1 }[a.status] ?? 2) - ({ Buy: 0, Watch: 1 }[b.status] ?? 2) || (b.momentum_3m ?? -9) - (a.momentum_3m ?? -9),
+    momentum: (a, b) => (b.momentum_3m ?? -9) - (a.momentum_3m ?? -9),
+    trend: (a, b) => (b.pct_above_200d ?? -9) - (a.pct_above_200d ?? -9),
+  };
+  const sorted = [...r.stocks].sort(sorters[state.industrySort]);
+  const shown = state.industryShowAll ? sorted : sorted.slice(0, 12);
+  const scale = Math.max(...r.stocks.map((s) => Math.abs(s.momentum_3m || 0)), 0.05);
+  const held = new Set(r.holdings.map((h) => h.ticker));
+
+  const tiles = [
+    ["Stocks scanned", r.scanned || "—", r.scanned ? `${r.buys} buy · ${r.watch} watch` : "run a scan"],
+    ["In an uptrend", r.uptrend == null ? "—" : pct(r.uptrend, 0), "50-day above 200-day average"],
+    ["Median 3-mo move", r.medianMomentum == null ? "—" : pct(r.medianMomentum, 1, true), r.best ? `best: ${esc(r.best.ticker)} ${pct(r.best.momentum_3m, 0, true)}` : ""],
+    ["Your dividend stocks", r.holdings.length || "0", r.holdings.length ? `${pct(r.coreWeight, 1)} of portfolio · ${money(r.income)}/yr` : "none held"],
+    ["Swing record", r.swing ? pct(r.swing.win_rate, 0) : "—", r.swing ? `${r.swing.trades} trades · avg ${pct(r.swing.avg_return, 1, true)}` : "no trades in backtest"],
+  ];
+  const sortButton = (key, label) => `<button class="sort-btn ${state.industrySort === key ? "active" : ""}" data-sort="${key}">${label}</button>`;
+
+  const stocksTable = r.stocks.length ? `
+    <table><thead><tr><th>Stock</th><th>${sortButton("signal", "Signal")}</th>
+      <th class="num">${sortButton("momentum", "3-month move")}</th><th class="num">${sortButton("trend", "vs 200-day")}</th><th class="num">RSI</th></tr></thead>
+    <tbody>${shown.map((s) => `<tr>
+      <td><b>${esc(s.ticker)}</b>${held.has(s.ticker) ? ' <span class="badge">YOU OWN</span>' : ""}<div class="meta">${esc(s.name || "")}</div></td>
+      <td>${s.status === "Buy" ? '<span class="pill good">✓ Buy</span>' : s.status === "Watch" ? '<span class="badge">Watch</span>' : '<span class="meta">—</span>'}</td>
+      <td class="num">${momentumCell(s.momentum_3m, scale)}</td>
+      <td class="num">${s.pct_above_200d == null ? "—" : pct(s.pct_above_200d, 1, true)}</td>
+      <td class="num">${s.rsi == null ? "—" : Math.round(s.rsi)}</td></tr>`).join("")}</tbody></table>
+    ${r.stocks.length > 12 ? `<button class="linkish show-all">${state.industryShowAll ? "Show top 12" : `Show all ${r.stocks.length} stocks`}</button>` : ""}`
+    : `<div class="empty">No stocks from this industry in today's scan.</div>`;
+
+  const holdings = r.holdings.length ? `<table><thead><tr><th>Holding</th><th class="num">Value</th><th class="num">Yield</th><th class="num">Income/yr</th></tr></thead>
+    <tbody>${[...r.holdings].sort((a, b) => b.market_value - a.market_value).map((h) => `<tr>
+      <td><b>${esc(h.ticker)}</b><div class="meta">${esc(state.data.names?.[h.ticker] || "")}</div></td>
+      <td class="num">${money(h.market_value)}</td><td class="num">${pct(h.dividend_yield, 1)}</td>
+      <td class="num">${money(h.forward_annual_income)}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="meta" style="padding:6px 0">You don't hold dividend stocks in this industry.</div>`;
+
+  let swing = `<div class="meta" style="padding:6px 0">No swing trades in this industry in the backtest.</div>`;
+  if (r.swing) {
+    const s = r.swing;
+    const contributors = s.by_ticker.length > 6 ? [...s.by_ticker.slice(0, 4), ...s.by_ticker.slice(-2)] : s.by_ticker;
+    swing = `<div class="meta" style="margin-bottom:6px">${s.trades} trades · ${pct(s.win_rate, 0)} winners · avg ${pct(s.avg_return, 1, true)} ·
+        held ~${Math.round(s.avg_hold)} days · best ${pct(s.best, 0, true)}, worst ${pct(s.worst, 0, true)} ·
+        <b class="${s.pnl >= 0 ? "up" : "down"}">${s.pnl >= 0 ? "+" : "−"}${money(Math.abs(s.pnl))}</b> total</div>
+      <table><thead><tr><th>Stock</th><th class="num">Trades</th><th class="num">Wins</th><th class="num">Profit</th></tr></thead>
+      <tbody>${contributors.map((t) => `<tr><td><b>${esc(t.ticker)}</b></td><td class="num">${t.trades}</td>
+        <td class="num">${pct(t.win_rate, 0)}</td>
+        <td class="num ${t.pnl >= 0 ? "up" : "down"}">${t.pnl >= 0 ? "+" : "−"}${money(Math.abs(t.pnl))}</td></tr>`).join("")}</tbody></table>`;
+  }
+
+  return `<div class="detail-inner">
+    <div class="mini-stats">${tiles.map(([label, value, sub]) =>
+      `<div class="mini-stat"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`).join("")}</div>
+    <div class="detail-grid">
+      <div><h3>Today's stocks in ${esc(r.industry)}</h3><div class="table-wrap">${stocksTable}</div></div>
+      <div><h3>Your dividend holdings</h3><div class="table-wrap">${holdings}</div>
+        <h3>Swing trading history <span class="meta">(backtest)</span></h3><div class="table-wrap">${swing}</div></div>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- industries today
+
+function renderBreadth() {
+  const rows = (state.data.scan?.industries || []).filter((r) => r.scanned > 0);
+  if (!rows.length) { $("#breadth").innerHTML = `<div class="empty">Run a scan to see which industries are moving.</div>`; return; }
+  const max = Math.max(...rows.map((r) => r.pct_signalling), 0.01);
+  $("#breadth").innerHTML = rows.map((r) => {
+    const tip = `${r.industry}: ${r.buy_signals} of ${r.scanned} stocks signalling${r.top_pick ? " · top pick " + r.top_pick : ""}`;
+    return `<div class="breadth-row" title="${esc(tip)} · click to break it down" data-industry="${esc(r.industry)}">
+      <div>${esc(r.industry)}</div>
+      <div class="breadth-track"><div class="breadth-fill" style="width:${(r.pct_signalling / max) * 100}%"></div></div>
+      <div class="breadth-val"><b style="color:var(--ink)">${pct(r.pct_signalling, 0)}</b> · ${r.buy_signals}/${r.scanned}</div>
+    </div>`;
+  }).join("");
+  $("#breadth").querySelectorAll(".breadth-row").forEach((row) =>
+    row.addEventListener("click", () => openIndustry(row.dataset.industry)));
+}
+
+// ---------------------------------------------------------------- dividends by year
+
+function renderDividends() {
+  const box = $("#divChart");
+  box.querySelector("svg")?.remove();
+  const rows = state.data.dividends_by_year || [];
+  if (!rows.length) return;
+  const lastDate = state.points.length ? state.points[state.points.length - 1].d : null;
+  const partialYear = lastDate && !lastDate.endsWith("12-31") ? Number(lastDate.slice(0, 4)) : null;
+  const W = box.clientWidth, H = box.clientHeight;
+  const pad = { top: 22, right: 4, bottom: 24, left: 44 };
+  const max = Math.max(...rows.map((r) => r.total));
+  const ticks = niceTicks(0, max, 3);
+  const top = Math.max(max, ticks[ticks.length - 1]);
+  const y = (v) => pad.top + (1 - v / top) * (H - pad.top - pad.bottom);
+  const slot = (W - pad.left - pad.right) / rows.length;
+  const barW = Math.max(4, Math.min(28, slot * 0.62));
+
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Dividends received per year" });
+  box.prepend(svg);
+  for (const tick of ticks) {
+    el("line", { x1: pad.left, x2: W - pad.right, y1: y(tick), y2: y(tick), stroke: tick === 0 ? css("--muted") : css("--grid"), "stroke-width": 1 }, svg);
+    const t = el("text", { x: pad.left - 8, y: y(tick) + 4, fill: css("--muted"), "font-size": 11, "text-anchor": "end" }, svg);
+    t.textContent = compact(tick);
+  }
+  const tip = $("#divTip");
+  const maxIndex = rows.findIndex((r) => r.total === max);
+  rows.forEach((r, i) => {
+    const cx = pad.left + slot * i + slot / 2;
+    const x0 = cx - barW / 2, y0 = y(r.total), y1 = y(0), radius = Math.min(4, barW / 2, y1 - y0);
+    const partial = r.year === partialYear;
+    const bar = el("path", {
+      d: `M${x0},${y1}V${y0 + radius}Q${x0},${y0} ${x0 + radius},${y0}H${x0 + barW - radius}Q${x0 + barW},${y0} ${x0 + barW},${y0 + radius}V${y1}Z`,
+      fill: css("--bar"), opacity: partial ? 0.45 : 1,
+    }, svg);
+    const showYear = rows.length <= 8 || i % 2 === (rows.length - 1) % 2;
+    if (showYear) {
+      const t = el("text", { x: cx, y: H - 6, fill: css("--muted"), "font-size": 11, "text-anchor": "middle" }, svg);
+      t.textContent = partial ? `${String(r.year).slice(2)} YTD` : `'${String(r.year).slice(2)}`;
+    }
+    if (i === maxIndex) {
+      const t = el("text", { x: cx, y: y0 - 6, fill: css("--ink-2"), "font-size": 11, "text-anchor": "middle", "font-weight": 600 }, svg);
+      t.textContent = compact(r.total);
+    }
+    const hit = el("rect", { x: cx - slot / 2, y: pad.top, width: slot, height: H - pad.top - pad.bottom, fill: "transparent" }, svg);
+    hit.addEventListener("pointerenter", () => {
+      bar.setAttribute("opacity", partial ? 0.6 : 0.8);
+      tip.style.display = "block";
+      tip.innerHTML = `<div class="t-date">${r.year}${partial ? " (so far)" : ""}</div>
+        <div class="t-row"><span>Total</span><b>${money(r.total)}</b></div>
+        <div class="t-row"><span style="color:var(--ink-2)">Dividend portfolio</span><span>${money(r.core)}</span></div>
+        <div class="t-row"><span style="color:var(--ink-2)">Swing positions</span><span>${money(r.swing)}</span></div>`;
+      tip.style.left = Math.min(Math.max(cx - tip.offsetWidth / 2, 0), W - tip.offsetWidth) + "px";
+      tip.style.top = Math.max(y0 - tip.offsetHeight - 10, -10) + "px";
+    });
+    hit.addEventListener("pointerleave", () => { bar.setAttribute("opacity", partial ? 0.45 : 1); tip.style.display = "none"; });
+  });
+}
+
+// ---------------------------------------------------------------- dividend portfolio
+
+function renderCore() {
+  const positions = (state.data.positions || []).filter((p) => p.sleeve === "core");
+  if (!positions.length) { $("#coreSubtitle").textContent = "No holdings yet."; return; }
+  const names = state.data.names || {};
+  const total = positions.reduce((sum, p) => sum + p.market_value, 0);
+  const income = positions.reduce((sum, p) => sum + (p.forward_annual_income || 0), 0);
+  $("#coreSubtitle").textContent = `${money(total)} across ${positions.length} stocks · ${money(income)}/yr in dividends (${pct(income / total, 2)})`;
+
+  // Colour follows the industry (alphabetical slot), not its rank, so colours stay put as weights change.
+  const industries = [...new Set(positions.map((p) => p.sector))].sort();
+  const color = (sector) => `var(--s${(industries.indexOf(sector) % 8) + 1})`;
+  const groups = industries.map((sector) => {
+    const items = positions.filter((p) => p.sector === sector);
+    const value = items.reduce((s, p) => s + p.market_value, 0);
+    const inc = items.reduce((s, p) => s + (p.forward_annual_income || 0), 0);
+    return { sector, items, value, income: inc };
+  }).sort((a, b) => b.value - a.value);
+
+  $("#allocBar").innerHTML = groups.map((g) =>
+    `<span style="flex:${g.value};background:${color(g.sector)}" title="${esc(g.sector)}: ${pct(g.value / total, 1)}"></span>`).join("");
+  $("#industryTable").innerHTML = `<thead><tr><th>Industry</th><th class="num">Weight</th><th class="num">Yield</th>
+      <th class="num">Income / yr</th><th class="num">Share of income</th><th>Holdings</th></tr></thead><tbody>` +
+    groups.map((g) => `<tr class="core-industry" style="cursor:pointer" title="Click to break this industry down"
+      data-industry="${esc((state.data.core_to_standard || {})[g.sector] || g.sector)}">
+      <td><span class="dot" style="background:${color(g.sector)}"></span>${esc(g.sector)}</td>
+      <td class="num">${pct(g.value / total, 1)}</td><td class="num">${pct(g.income / g.value, 1)}</td>
+      <td class="num">${money(g.income)}</td><td class="num">${pct(g.income / income, 0)}</td>
+      <td style="color:var(--ink-2)">${g.items.map((p) => esc(p.ticker)).join(", ")}</td></tr>`).join("") + "</tbody>";
+
+  $("#industryTable").querySelectorAll("tr.core-industry").forEach((row) =>
+    row.addEventListener("click", () => openIndustry(row.dataset.industry)));
+
+  const sorted = [...positions].sort((a, b) => b.market_value - a.market_value);
+  $("#holdingsTable").innerHTML = `<thead><tr><th>Holding</th><th>Industry</th><th class="num">Value</th><th class="num">Weight</th>
+      <th class="num">Yield</th><th class="num">Income / yr</th></tr></thead><tbody>` +
+    sorted.map((p) => `<tr><td><b>${esc(p.ticker)}</b><div class="meta">${esc(names[p.ticker] || "")}</div></td>
+      <td><span class="dot" style="background:${color(p.sector)}"></span>${esc(p.sector)}</td>
+      <td class="num">${money(p.market_value)}</td><td class="num">${pct(p.market_value / total, 1)}</td>
+      <td class="num">${pct(p.dividend_yield, 1)}</td><td class="num">${money(p.forward_annual_income)}</td></tr>`).join("") + "</tbody>";
+}
+
+// ---------------------------------------------------------------- swing trades
+
+function renderTrades() {
+  const open = (state.data.positions || []).filter((p) => p.sleeve === "swing");
+  $("#openSwing").innerHTML = open.length
+    ? `<div class="subtitle" style="margin-bottom:8px">Open now: ${open.map((p) => `<b>${esc(p.ticker)}</b> ${money(p.market_value)}`).join(" · ")}</div>`
+    : "";
+  const trades = state.data.swing_trades || [];
+  if (!trades.length) { $("#tradesTable").innerHTML = ""; return; }
+  $("#tradesTable").innerHTML = `<thead><tr><th>Stock</th><th>Held</th><th>Exit reason</th><th class="num">Return</th><th class="num">Profit</th></tr></thead><tbody>` +
+    trades.map((t) => {
+      const up = t.pnl >= 0;
+      return `<tr><td><b>${esc(t.ticker)}</b><div class="meta">${esc(state.data.names?.[t.ticker] || t.setup)}</div></td>
+        <td>${fmtDate(t.entry_date, { month: "short", day: "numeric" })} → ${fmtDate(t.exit_date, { month: "short", day: "numeric", year: "numeric" })}
+          <div class="meta">${t.hold_days} trading days</div></td>
+        <td style="color:var(--ink-2)">${esc(String(t.exit_reason).replace(/_/g, " "))}</td>
+        <td class="num ${up ? "up" : "down"}">${up ? "▲" : "▼"} ${pct(Math.abs(t["return"]), 1)}</td>
+        <td class="num ${up ? "up" : "down"}">${up ? "+" : "−"}${money(Math.abs(t.pnl))}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+function renderFooter() {
+  const d = state.data;
+  const when = (ts) => (ts ? new Date(ts * 1000).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : "never");
+  $("#footer").innerHTML = `Backtest updated ${when(d.backtest_updated)} · scan updated ${when(d.scan?.updated)}.<br>
+    The portfolio numbers are a <b>simulation</b> of the strategy since ${String(d.start_date).slice(0, 4)}, not a real account.
+    Trade ideas come from rules, not advice. Prices from Yahoo Finance; US stocks shown in US$.`;
+}
+
+// ---------------------------------------------------------------- run buttons
+
+const JOB_TEXT = {
+  scan: { running: "Scanning the market… about a minute", done: "Scan finished. Ideas updated.", button: "#runScan" },
+  backtest: { running: "Rerunning the backtest with fresh data… about a minute", done: "Backtest finished. Portfolio updated.", button: "#runBacktest" },
+};
+let toastTimer;
+function toast(html, sticky = false) {
+  const node = $("#toast");
+  node.innerHTML = html;
+  node.classList.add("show");
+  clearTimeout(toastTimer);
+  if (!sticky) toastTimer = setTimeout(() => node.classList.remove("show"), 4500);
+}
+
+function setBusy(name, busy) {
+  const button = $(JOB_TEXT[name].button);
+  button.disabled = busy;
+  button.classList.toggle("busy", busy);
+}
+
+async function runJob(name) {
+  setBusy(name, true);
+  await fetch(`/api/run/${name}`, { method: "POST" });
+  toast(JOB_TEXT[name].running, true);
+  poll(name);
+}
+
+async function poll(name) {
+  const jobs = await (await fetch("/api/jobs")).json();
+  const job = jobs[name];
+  if (job.state === "running") { setTimeout(() => poll(name), 2000); return; }
+  setBusy(name, false);
+  if (job.state === "done") {
+    toast(JOB_TEXT[name].done);
+    await load();
+  } else if (job.state === "failed") {
+    toast(`Something went wrong.<pre>${esc(job.log.join("\n"))}</pre>`, true);
+    setTimeout(() => $("#toast").classList.remove("show"), 12000);
+  }
+}
+
+function resumeJobs() {
+  for (const [name, job] of Object.entries(state.data.jobs || {})) {
+    if (job.state === "running" && !$(JOB_TEXT[name].button).disabled) { setBusy(name, true); toast(JOB_TEXT[name].running, true); poll(name); }
+  }
+}
+
+$("#runScan").addEventListener("click", () => runJob("scan"));
+$("#runBacktest").addEventListener("click", () => runJob("backtest"));
+$("#holdingsToggle").addEventListener("click", () => {
+  const wrap = $("#holdingsWrap");
+  wrap.hidden = !wrap.hidden;
+  $("#holdingsToggle").textContent = wrap.hidden ? "Show all holdings" : "Hide holdings";
+});
+
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (state.data) { renderHero(); renderDividends(); } }, 150); });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => state.data && renderAll());
+
+load().catch((error) => {
+  $("#balance").textContent = "Couldn't load data";
+  $("#delta").textContent = "Is dashboard.py still running? " + error;
+});
+</script>
+</body>
+</html>

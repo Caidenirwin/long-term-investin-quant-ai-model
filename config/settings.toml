@@ -1,0 +1,151 @@
+start_date = "2012-01-01"
+end_date = ""
+warmup_years = 2                  # extra history downloaded before start_date so indicators are ready on day one
+starting_cash = 1000              # your plan: what you start with (main.py, dashboard)
+research_starting_cash = 100000   # audit / optimizer / walk-forward judge the rules on a fixed C$100k, no deposits
+portfolio_currency = "CAD"
+cad_per_usd_ticker = "CAD=X"
+transaction_fee = 1.00            # per trade. ~C$1 minimum at Interactive Brokers; C$0 at Wealthsimple. (Was 4.95.)
+slippage_bps = 10
+whole_shares = true               # buy whole shares only, like a real account (matters a lot for small accounts)
+fx_fee_bps = 0                    # extra cost on US-listed trades for converting CAD<->USD. 0 = you hold a USD account
+                                  # (or use Norbert's gambit); ~150 = Wealthsimple's 1.5% conversion fee in a CAD account
+benchmark_ticker = "XIC.TO"
+risk_free_rate = 0.03
+cash_interest_rate = 0.015        # idle cash earns this (e.g. a high-interest savings ETF); 2012-2025 average was ~1.5%
+out_of_sample_start = "2021-01-01" # optimize.py tunes on data before this date and reports results after it
+
+# Money you add every month (first trading day of the month), split like the starting cash.
+[contributions]
+monthly = 200
+swing_fraction = 0.25             # share of each deposit for the swing sleeve; the rest goes to dividend stocks
+
+# ---------------------------------------------------------------------------
+# Swing sleeve: short-term trades whose net profits fund the dividend core.
+#   pullback: in a long-term uptrend, buy a sharp dip (low RSI); sell on the bounce above a short MA.
+#   breakout: buy a new N-day closing high while the 50-day MA is above the 200-day MA;
+#             ride it with a trailing N-day-low stop.
+# The same rules drive scan.py, the daily research scanner.
+# ---------------------------------------------------------------------------
+[swing]
+enabled = true
+capital_fraction = 0.25           # share of starting cash given to the swing sleeve (bigger = smoother but lower CAGR)
+setups = ["breakout"]             # optimizer: breakouts held up in both periods; pullbacks barely beat costs.
+                                  # Use ["pullback", "breakout"] to trade both.
+use_stocks = true                 # also trade stock_universe, not just ETFs
+max_positions = 3                 # each trade uses 1/max_positions of the sleeve (3 beat 5 and 8)
+trend_ma_days = 200               # only buy above this moving average
+fast_ma_days = 50
+stop_loss = 0.15                  # 0 disables (applies to both setups)
+take_profit = 0.0                 # 0 disables
+# pullback settings
+rsi_days = 3
+entry_rsi = 10                    # buy when RSI(3) is below this
+exit_ma_days = 10                 # sell when price closes above this moving average
+max_hold_days = 20
+# breakout settings
+breakout_days = 20                # buy a close above the highest close of the previous N days
+trail_days = 40                   # sell a close below the lowest close of the previous N days (wide = let winners run)
+breakout_max_hold_days = 40
+# execution
+execution_lag_days = 1            # 1 = signal on yesterday's close, trade at today's close (strict, no look-ahead)
+                                  # 0 = trade at the signal day's close (you check signals ~15 min before the bell)
+slippage_bps = 3                  # big ETFs have much tighter spreads than single stocks
+min_trade_value = 200             # smallest swing position; a small sleeve holds fewer than max_positions
+market_filter_ticker = "SPY"      # no new swing entries while this is below its trend MA; "" disables
+park_ticker = ""                  # e.g. "XIU.TO": hold idle swing cash in an index ETF while the market filter is on.
+                                  # Tested in walk_forward.py: no reliable improvement, so off.
+universe = [
+  "SPY", "QQQ", "IWM", "DIA",
+  "XLE", "XLF", "XLK", "XLV", "XLI", "XLU", "XLP",
+  "GLD", "XIU.TO", "XEG.TO", "ZEB.TO",
+]
+# The largest US and Canadian companies as of early 2012 (not today's winners), so the backtest
+# isn't flattered by hindsight. scan.py can research any ticker you like.
+stock_universe = [
+  "AAPL", "MSFT", "XOM", "IBM", "CVX", "GE", "WMT", "GOOGL", "JNJ", "PG",
+  "T", "PFE", "KO", "JPM", "WFC", "ORCL", "PM", "MRK", "INTC", "VZ",
+  "QCOM", "CSCO", "PEP", "MCD", "ABT", "SLB", "C", "HD", "BAC", "DIS", "AMZN", "UNH",
+  "RY.TO", "TD.TO", "BNS.TO", "BMO.TO", "CM.TO", "SU.TO", "CNQ.TO", "CNR.TO", "ENB.TO",
+  "MFC.TO", "BCE.TO", "TRP.TO", "ABX.TO", "CP.TO", "SLF.TO", "TECK-B.TO", "IMO.TO", "CVE.TO",
+]
+
+# live_trader.py: forward testing and live trading. Run once per trading day.
+[live]
+mode = "sim"                      # sim = forward test (no broker) | ibkr-paper | ibkr-live
+capital = 1000                    # CAD the strategy starts with (can be less than the whole account)
+max_order_value = 15000           # any single order above this is blocked
+max_orders_per_run = 40           # more orders than this in one run = something's wrong, send nothing
+max_run_turnover = 1.0            # total orders per run as a share of the portfolio (1.0 allows the first build)
+allow_live = false                # must be true AND --live passed before real-money orders are sent
+ib_host = "127.0.0.1"
+ib_port_paper = 4002              # IB Gateway paper port (TWS paper is usually 7497)
+ib_port_live = 4001               # IB Gateway live port (TWS live is usually 7496)
+ib_client_id = 17
+ib_account = ""                   # leave blank to use the first account IB Gateway reports
+
+# scan.py: daily research for quick trades.
+[scanner]
+account_size = 250                # your real swing account size, for suggested share counts (25% of C$1,000)
+extra_tickers = []                # anything else you want researched, e.g. ["SHOP.TO", "NVDA"]
+earnings_buffer_days = 5          # flag signals with earnings this close (gap risk)
+min_dollar_volume = 20000000      # skip names trading less than this per day (20-day average)
+history_years = 5                 # history used for each ticker's setup track record
+max_watchlist = 10                # near-signals to show
+discover = true                   # also scan whole indexes for stocks you don't follow yet (scan.py --no-discover to skip)
+discover_indexes = ["sp500", "tsx60"]
+max_buy_ideas = 15                # buy signals to show, best first
+max_per_sector = 3                # at most this many picks from one industry, so the shortlist stays diversified
+
+# Swing profits above the sleeve's starting capital are moved into the dividend core.
+[profit_sweep]
+fraction = 1.0                    # 1.0 = sweep all realized net profit; 0.5 = keep half compounding in the swing sleeve
+
+# ---------------------------------------------------------------------------
+# Dividend core: long-term dividend payers spread across industries.
+# ---------------------------------------------------------------------------
+[core]
+rebalance_frequency = "Q"         # Q = quarterly, S = semiannual, A = annual
+stocks_per_sector = 3
+hold_buffer = 2                   # keep a holding while it ranks within stocks_per_sector + hold_buffer
+rebalance_band = 0.04             # only trade a holding whose weight drifts more than this from target
+max_position_size = 0.08
+min_cash_buffer = 0.01
+min_deploy_cash = 100             # deposits / swept profits / pooled dividends are invested once cash exceeds this
+min_trade_value = 100             # smallest single buy, so fees stay small relative to the trade
+min_position_value = 200          # a small account holds fewer stocks (each at least this), adding more as it grows
+min_yield = 0.01                  # skip stocks with indicated yield below 1%
+max_yield = 0.10                  # yields above 10% are treated as likely dividend traps
+cut_threshold = 0.15              # a >15% drop in the dividend marks a cut and the stock is sold
+sector_momentum_tilt = 0.0        # e.g. 0.5: overweight industries with the best 12-month momentum.
+                                  # Tested in walk_forward.py: helped after 2021, hurt before, so off.
+
+[core.score_weights]
+dividend_yield = 0.30
+dividend_growth = 0.25
+low_volatility = 0.15
+trend = 0.30
+
+[dividends]
+mode = "drip"                     # drip = reinvest in the paying stock; smart = reinvest in the most underweight holding; cash = withdraw
+us_withholding_tax = 0.15         # 15% for TFSA/taxable; set 0.0 for an RRSP
+
+[target_allocation]
+"Financials" = 0.125
+"Energy / Pipelines" = 0.125
+"Utilities" = 0.125
+"Telecom" = 0.125
+"Consumer Staples" = 0.125
+"Industrials / Transport" = 0.125
+"Healthcare" = 0.125
+"Real Estate" = 0.125
+
+[sectors]
+"Financials" = ["RY.TO", "TD.TO", "BNS.TO", "BMO.TO", "CM.TO", "MFC.TO", "SLF.TO", "POW.TO"]
+"Energy / Pipelines" = ["ENB.TO", "TRP.TO", "PPL.TO", "CNQ.TO", "SU.TO", "IMO.TO", "CVX"]
+"Utilities" = ["FTS.TO", "EMA.TO", "H.TO", "CU.TO", "AQN.TO", "BIP-UN.TO"]
+"Telecom" = ["BCE.TO", "T.TO", "RCI-B.TO", "VZ"]
+"Consumer Staples" = ["MRU.TO", "L.TO", "PG", "KO", "PEP"]
+"Industrials / Transport" = ["CNR.TO", "TIH.TO", "UPS", "CAT", "AFN.TO"]
+"Healthcare" = ["JNJ", "ABBV", "PFE", "MRK"]
+"Real Estate" = ["CAR-UN.TO", "REI-UN.TO", "GRT-UN.TO", "CHP-UN.TO"]

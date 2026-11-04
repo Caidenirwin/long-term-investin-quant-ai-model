@@ -1,0 +1,24 @@
+# Settings for the AI investor (ai_investor/). Your account plan (deposits, sleeve split, fees) still comes
+# from config/settings.toml so the AI and the rules-based system always agree on the money.
+
+[data]
+start_date = "2008-01-01"         # history to learn from (features need ~1 year before the first sample)
+# Stocks the AI learns from and researches, plus everything in settings.toml (~1,700 companies):
+# US large (S&P 500), mid (S&P 400) and small (S&P 600) caps, and Canada large (TSX 60) to small (TSX Composite).
+indexes = ["sp500", "tsx60", "sp400", "sp600", "tsx_composite"]
+sample_every_days = 5             # one training sample per stock per week (daily samples are near-duplicates)
+
+[models]
+# Each model predicts how a stock will do vs the other stocks over its horizon (a ranking, not a price).
+swing_horizon_days = 21           # about one month: matches how long the breakout trades are held
+longterm_horizon_days = 252       # about one year: for choosing dividend stocks to hold
+first_test_year = 2016            # walk-forward: every year from here is predicted by a model that never saw it
+
+[plan]
+swing_picks = 5                   # swing ideas to show
+# The breakout rules were tested on large, well-known companies, so swing ideas only come from these indexes
+# (plus your own lists). The AI still learns from every stock above.
+swing_indexes = ["sp500", "tsx60"]
+longterm_picks_per_industry = 2   # long-term ideas per industry
+longterm_max_volatility = 0.40    # dividend ideas must be calmer than this (annualized volatility)
+news_candidates = 25              # how many top ideas get a news check
